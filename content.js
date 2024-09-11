@@ -914,8 +914,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // **Capture image**
         const captureBitmap = await captureBodyScreenshot();
 
-        canvas.width = viewWidth;
-        canvas.height = viewHeight;
+        canvas.width = viewWidth; //set dimension for cropping frame
+        canvas.height = viewHeight; //
         const ctx = canvas.getContext("2d");
 
         const srcRect = new Rectangle(viewLeft, viewTop, viewWidth, viewHeight);
