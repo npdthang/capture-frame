@@ -1,8 +1,8 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("Message received in background.js:", message);
-  if (message.action === "captureVisibleTab") {
+  if (message.action === "captureVisibleTab" || message.action === "takeFrameShot") {
     const { pixelRatio } = message;
-    chrome.tabs.captureVisibleTab({ format: "jpeg", quality: 100 }, (imageData) => {
+    chrome.tabs.captureVisibleTab({ format: "png", quality: 100 }, (imageData) => {
       console.log("Captured visible tab dataUrl:", imageData);
       sendResponse({ screenshot: imageData });
     });
