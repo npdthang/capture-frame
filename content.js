@@ -3,6 +3,67 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const TOP_DOCUMENT_CONTEXT = "top-document";
   const FRAME_DOCUMENT_CONTEXT_FORMAT = "FrameContext_";
 
+  // async function captureBodyScreenshot() {
+  //   let zoomLevel = window.devicePixelRatio;
+  //   let orgScrollTop = document.documentElement.scrollTop;
+  //   let orgScrollLeft = document.documentElement.scrollLeft;
+  //   let elementWidth = document.documentElement.scrollWidth;
+  //   let elementHeight = document.documentElement.scrollHeight;
+  //   let viewWidth = document.documentElement.clientWidth * zoomLevel;
+  //   let viewHeight = document.documentElement.clientHeight * zoomLevel;
+  //
+  //   const finalBitmap = document.createElement('canvas');
+  //   finalBitmap.width = elementWidth;
+  //   finalBitmap.height = elementHeight;
+  //   const finalCtx = finalBitmap.getContext('2d');
+  //
+  //   let scrollTop = 0;
+  //   let calcScrollTop = 0;
+  //
+  //   do {
+  //     let scrollLeft = 0;
+  //     let calcScrollLeft = 0;
+  //
+  //     do {
+  //       // Execute script to scroll the element
+  //       document.body.scrollTop = Math.round(scrollTop / zoomLevel);
+  //       document.body.scrollLeft = Math.round(scrollLeft / zoomLevel);
+  //
+  //       scrollTop = document.body.scrollTop;
+  //       scrollLeft = document.body.scrollLeft;
+  //
+  //       scrollTop = Math.round(scrollTop * zoomLevel);
+  //       scrollLeft = Math.round(scrollLeft * zoomLevel);
+  //       await new Promise(resolve => setTimeout(resolve, 200));
+  //       const captureTab = await new Promise((resolve) => {
+  //         chrome.runtime.sendMessage({ action: 'captureVisibleTab' }, resolve);
+  //       });
+  //       const captureBitmap = new Image();
+  //       // Capture a screenshot of the visible part
+  //       await new Promise((resolve, reject) => {
+  //         captureBitmap.onload = resolve;
+  //         captureBitmap.onerror = reject;
+  //         captureBitmap.src = captureTab.screenshot;
+  //       });
+  //
+  //       captureBitmap.onload = () => {
+  //         finalCtx.drawImage(captureBitmap, scrollLeft, scrollTop);
+  //       };
+  //       //captureBitmap.src = `data:image/png;base64,${btoa(captureData)}`; // Convert screenshot data to image
+  //
+  //       scrollLeft += viewWidth;
+  //       calcScrollLeft += viewWidth;
+  //     } while (scrollLeft <= elementWidth && calcScrollLeft <= elementWidth);
+  //
+  //     scrollTop += viewHeight;
+  //     calcScrollTop += viewHeight;
+  //   } while (scrollTop <= elementHeight && calcScrollTop <= elementHeight);
+  //
+  //   document.documentElement.scrollTop = orgScrollTop;
+  //   document.documentElement.scrollLeft = orgScrollLeft;
+  //
+  //   return finalBitmap;
+  // }
   async function captureBodyScreenshot(){
     let zoomLevel = window.devicePixelRatio;
     let orgScrollTop = document.documentElement.scrollTop;
@@ -29,7 +90,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         window.scrollTo(Math.round(scrollLeft / zoomLevel), Math.round(scrollTop / zoomLevel));
 
         // Wait for the scroll to complete and for the page to be ready
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
 
         // Capture a screenshot of the visible part
         const captureData = await new Promise((resolve) => {
@@ -59,7 +120,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Return the final bitmap as a data URL
     return finalBitmap
   }
-  
+
   function isFrameElement(element) {
     if (!(element instanceof HTMLElement)) {
       throw new Error('Argument must be an instance of HTMLElement');
@@ -455,7 +516,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         scrollHTMLElement.scrollTop = thisElement.orgScrollTop;
         scrollHTMLElement.scrollLeft = thisElement.orgScrollLeft;
       }
-      
+
       if (thisElement.isFrameElement) {
         try {
           // let imagePath = Utilities.EditToolConfig.current.imageFolderPath + thisElement.baseImg;
@@ -577,10 +638,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Resize canvas if zoom level is not 1 (assuming a resizeCanvas function)
       if (Math.abs(zoomLevel - 1) > 0.001) {
         const resizedCanvas = resizeImage(finalCanvas, new Size(elementWidth, elementHeight));
-        return saveCanvas(resizedCanvas, true); // save image
+        return resizedCanvas.toDataURL('image/png'); // save image
       }
-      
-      return saveCanvas(finalCanvas, true); // save image
+
+      return finalCanvas.toDataURL('image/png'); // save image
     } finally {
       // Restore scroll positions
       orgPositionData.forEach(data => {
@@ -645,10 +706,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Resize final image (if zoom is not 1)
       if (Math.abs(zoomLevel - 1) > 0.001) {
         const resizedBitmap = resizeImage(finalBitmap, new Size(elementWidth, elementHeight));
-        return await saveCanvas(resizedBitmap, true); // save image
+        return finalBitmap.toDataURL('image/png');//await saveCanvas(resizedBitmap, true); // save image
       }
 
-      return await saveCanvas(finalBitmap, true); // save image
+      return finalBitmap.toDataURL('image/png'); // save image
     } finally {
       // Rollback to original scroll positions
       for (const orgData of orgPositionData) {
@@ -1150,7 +1211,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Starting frameshot process...");
     const captureFrame = async () => {
       try {
-        const frameElement = document.body.querySelector('frameset').parentNode.querySelectorAll('frame')[1];
+        // Check for the presence of frameset or iframe and adjust selectors accordingly
+        const frameElement = document.body.querySelector('frameset')
+          ? document.body.querySelector('frameset').parentNode.querySelectorAll('frame')[0]
+          : document.body.querySelector('iframe');
+
+        if (!frameElement) {
+          throw new Error("Frame element not found");
+        }
 
         // Get the content inside the frame
         const contentElement = frameElement.contentDocument;
@@ -1168,7 +1236,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // Calculate offsets and initialize other necessary variables
         const parentId = '0000';
-        const selector = 'frame';
+        const selector = 'frame'; // or 'iframe' depending on your context
         const parentOffsetTop = 0;
         const parentOffsetLeft = 0;
         const isParentFrame = true;
@@ -1180,7 +1248,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           elementList,            // List to store captured elements
           parentId,               // Parent ID
           selector,               // Selector for the frame
-          TOP_DOCUMENT_CONTEXT,   // Context string
+          TOP_DOCUMENT_CONTEXT,   // Context string (ensure this is defined)
           parentOffsetTop,        // Top offset of the parent
           parentOffsetLeft,       // Left offset of the parent
           frameLevel,             // Frame level (depth)
@@ -1188,18 +1256,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           isParentFrame,          // Is this the parent frame?
           parentFrameElement      // Parent frame element (null in this case)
         );
-        chrome.runtime.sendMessage({ action: "captureVisibleTab", pixelRatio: devicePixelRatio }, (dataUrl) => {
+
+        // Send captured images using chrome.runtime.sendMessage
+        chrome.runtime.sendMessage({ action: "captureVisibleTab", pixelRatio: zoomLevel }, (response) => {
           console.log("Captured all images, sending response:", capturedImages);
-          sendResponse({ dataUrl: capturedImages,
-            htmlDomList: [] });
+          console.log(response)
+          sendResponse({ dataUrl: capturedImages });
         });
-        // Get the frame element inside the frameset
+
       } catch (ex) {
         console.error("Error capturing the frame:", ex);
       }
     };
-    setTimeout(captureFrame, 1000); // Delay capture to allow frame loading
-    return true; // Keep the message channel open for sendResponse
+
+    // Delay capture to allow frame loading
+    setTimeout(captureFrame, 1000);
+
+    // Keep the message channel open for sendResponse
+    return true;
   }
 
   if (message.action === "takeScreenshot") {
