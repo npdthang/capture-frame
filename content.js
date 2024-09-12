@@ -125,7 +125,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!(element instanceof HTMLElement)) {
       throw new Error('Argument must be an instance of HTMLElement');
     }
-
     return element.tagName.toLowerCase() === 'iframe' || element.tagName.toLowerCase() === 'frame';
   }
 
@@ -138,7 +137,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!(element instanceof HTMLElement)) {
       throw new Error('Argument must be an instance of HTMLElement');
     }
-
     // Check if the scrollHeight is greater than the clientHeight
     return element.scrollHeight > element.clientHeight;
   }
@@ -147,7 +145,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!(element instanceof HTMLElement)) {
       throw new Error('Argument must be an instance of HTMLElement');
     }
-
     // Check if the scrollWidth is greater than the clientWidth
     return element.scrollWidth > element.clientWidth;
   }
@@ -246,9 +243,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
    * Generates a unique ID for an element.
    * @returns {string} A unique ID.
    */
-  function generateUniqueId() {
-    return `element-${Math.random().toString(36).substr(2, 9)}`;
-  }
+
+  // function generateUniqueId() {                       // No use this function for now
+  //   return `element-${Math.random().toString(36).substr(2, 9)}`;
+  // }
 
   function getSelectorOfAllModalElements(context) {
     // Define a list of common classes or attributes used for modals
@@ -327,9 +325,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   };
 
-  async function captureElement(
-    htmlElement, elementList, parentId, selector, context, parentOffsetTop, parentOffsetLeft, frameLevel, frameIndex, isParentFrame, parentFrameElement
-  ) {
+  async function captureElement(htmlElement, elementList, parentId, selector,
+                                context, parentOffsetTop, parentOffsetLeft,
+                                frameLevel, frameIndex, isParentFrame, parentFrameElement) {
     let children = null;
     let scrollHTMLElement = null;
     const returnIdList = [];
@@ -1271,7 +1269,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Delay capture to allow frame loading
     setTimeout(captureFrame, 1000);
-
     // Keep the message channel open for sendResponse
     return true;
   }
@@ -1279,38 +1276,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "takeScreenshot") {
     console.log("Starting screenshot process...");
 
-    const { scrollHeight, clientHeight } = document.documentElement; // Create var get height of monitor height and page height
+    const { scrollHeight, clientHeight } = document.documentElement;
     const devicePixelRatio = window.devicePixelRatio || 1;
 
     let capturedHeight = 0;
-    let capturedImages = []; // Array store each captured image
+    let capturedImages = [];
 
-    window.scrollTo(0, 0); // Scroll to the top before starting the capture
+    // Scroll to the top before starting the capture
+    window.scrollTo(0, 0);
 
-    // function capture image
     const captureAndScroll = () => {
-      const scrollAmount = clientHeight * devicePixelRatio; // Amount of scroll each time
+      const scrollAmount = clientHeight * devicePixelRatio;
 
       chrome.runtime.sendMessage({ action: "captureVisibleTab", pixelRatio: devicePixelRatio }, (dataUrl) => {
         console.log("Captured image dataUrl:", dataUrl);
         capturedHeight += scrollAmount;
 
         if (dataUrl) {
-          capturedImages.push(dataUrl); // Push each capture image into the array
+          capturedImages.push(dataUrl);
         }
 
         if (capturedHeight < scrollHeight * devicePixelRatio) {
-          window.scrollTo(0, capturedHeight); // Scroll to the next part of the page
-          setTimeout(captureAndScroll, 3000); // Adjust the delay as needed
-        }
-        else {
-          // const htmlList = htmlBody.childNodes;
+          // Scroll to the next part of the page
+          window.scrollTo(0, capturedHeight);
+          setTimeout(captureAndScroll, 2000); // Adjust the delay as needed
+        } else {
           console.log("Captured all images, sending response:", capturedImages);
-          sendResponse({ dataUrl: capturedImages});
+          sendResponse({ dataUrl: capturedImages });
         }
       });
     };
-    setTimeout(captureAndScroll, 1000); // Delay to allow scroll-to-top to take effect before starting the capture
+
+    // Delay to allow scroll-to-top to take effect before starting the capture
+    setTimeout(captureAndScroll, 500);
+
     return true; // Keep the message channel open for sendResponse
   }
 });
