@@ -77,25 +77,24 @@ document.getElementById("takeScreenshotBtn").addEventListener("click", () => {
             imagesLoaded++;
 
             if (imagesLoaded === images.length) {
-              // Download capture image
               const link = document.createElement("a");
-              link.href = canvas.toDataURL("image/jpeg");
-              link.download = "fullpage_screenshot.jpeg";
+              link.href = canvas.toDataURL("image/png");
+              link.download = "fullpage_screenshot.png";
+
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
             }
           };
-
           images.forEach((dataUrl, index) => {
             const image = new Image();
             image.onload = () => drawImageOnCanvas(image, index);
             image.src = dataUrl;
           });
         };
-
         firstImage.src = images[0];
       });
+
     });
   });
 });
