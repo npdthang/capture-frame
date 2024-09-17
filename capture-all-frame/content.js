@@ -63,7 +63,7 @@ async function processInBatches(framesInfo, screenshotImage) {
     try {
       console.log(`Capturing frame ${i}`);
       const frameImage = await captureFullFrameContent(frameInfo, screenshotImage);
-      frameImages.push(frameImage);
+      frameImages.push({image: frameImage, htmlDom: frameInfo.htmlDom});
     } catch (error) {
       console.error(`Error capturing frame ${i}:`, error);
     }
@@ -153,7 +153,8 @@ function getAllFramesInfo(win, rootWindow) {
         y: absolutePosition.y,
         width: rect.width,
         height: rect.height,
-        level: frame.contentWindow // Child frame
+        level: frame.contentWindow, // Child frame
+        htmlDom: frame.contentWindow.document.documentElement.outerHTML // Get htmlDom from frame
       });
 
       // Recursively gather info of child frames
