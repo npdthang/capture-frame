@@ -7,7 +7,13 @@ document.getElementById("captureFramesBtn").addEventListener("click", () => {
     }, () => {
       chrome.tabs.sendMessage(activeTab.id, { action: "takeFrameShot" }, (response) => {
         if (response.frameImage) {
-          displayFrame(response.frameImage);
+          // Hard reload page every 1 minute after click frame capture btn to prevent error for the next time click capture btn          
+          setTimeout(() => { 
+            chrome.tabs.reload(activeTab.id, { bypassCache: true }, function() {
+              // After reload is complete, call your function
+              displayFrame(response.frameImage);
+          });
+          }, 60000);
         } else {
           console.error("Error in response:", response.error);
         }
