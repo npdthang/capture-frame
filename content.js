@@ -158,6 +158,7 @@ function getAllFramesInfo(win, rootWindow) {
     try {
       const rect = frame.getBoundingClientRect();
       const absolutePosition = calculateAbsolutePosition(rect, win, rootWindow);
+      const htmlDom = captureElements(frame)
 
       framesInfo.push({
         x: absolutePosition.x,
@@ -165,7 +166,7 @@ function getAllFramesInfo(win, rootWindow) {
         width: rect.width,
         height: rect.height,
         level: frame.contentWindow, // Child frame
-        htmlDom: captureElements(frame)
+        htmlDom: htmlDom
       });
 
       // Recursively gather info of child frames
