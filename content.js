@@ -195,7 +195,7 @@ function calculateAbsolutePosition(rect, win, rootWindow) {
   return { x, y };
 }
 
-async function captureElements(parentElement) {
+async function captureElements(parentElement) { //capture element lists
   let elementsArray = [];  // This will store all elements in the order we traverse.
 
   // Recursive function to traverse elements and their children
