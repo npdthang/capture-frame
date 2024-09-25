@@ -11,9 +11,9 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         processScreenshot(response.screenshotUrl).then((frameImages) => {
           console.log("Frames processed:", frameImages);
           const dataZip = [];
-          frameImages.forEach((frameImage) => {
+          frameImages.forEach((frameImage, index) => {
             dataZip.push({
-              name: Math.floor(Math.random() * 10),
+              name: index + 1,
               base64: frameImage.image,
               contentType: 'image/png'
             })
