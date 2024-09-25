@@ -10,6 +10,15 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         // Process the screenshot (you'll need to implement processScreenshot)
         processScreenshot(response.screenshotUrl).then((frameImages) => {
           console.log("Frames processed:", frameImages);
+          const dataZip = [];
+          frameImages.forEach((frameImage) => {
+            dataZip.push({
+              name: Math.floor(Math.random() * 10),
+              base64: frameImage.image,
+              contentType: 'image/png'
+            })
+          })
+          downloadBase64FilesAsZip(dataZip);
 
           // Send the first frame image back to the popup as an example
           if (frameImages.length > 0) {
@@ -41,6 +50,51 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     });
   }
 });
+
+async function base64ToBlob(base64Data, contentType) {
+  base64Data = base64Data.replace('data:image/png;base64,','');
+  const byteCharacters = atob(base64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  return new Blob(byteArrays, { type: contentType });
+}
+
+// Function to download multiple base64 files as a ZIP
+function downloadBase64FilesAsZip(files) {
+  const zip = new JSZip();
+
+  // Fetch each file and add it to the ZIP
+  files.forEach((file) => {
+    const blob = base64ToBlob(file.base64, file.contentType);
+    zip.file(file.name, blob);
+  });
+
+  // Generate the ZIP file and trigger the download
+  zip.generateAsync({ type: 'blob' }).then(function (content) {
+    const url = URL.createObjectURL(content);
+    
+    // Trigger the download by sending a message to the background script (background.js file) 
+    // or service worker, where the download logic will be executed. 
+    chrome.runtime.sendMessage({
+      action: 'downloadFile',
+      url: url,
+      filename: 'files.zip'
+    });
+  });
+}
+
 // Function to process the screenshot and handle scrollable frames
 function processScreenshot(screenshotUrl) {
   return new Promise((resolve, reject) => {

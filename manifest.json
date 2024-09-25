@@ -2,14 +2,24 @@
   "manifest_version": 3,
   "name": "Screenshot Extension",
   "version": "1.0",
-  "permissions": ["activeTab", "tabs", "scripting"],
+  "permissions": [
+                  "downloads",
+                  "activeTab", 
+                  "tabs", 
+                  "scripting", 
+                  "<all_urls>",
+                  "downloads.shelf"
+                ],
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": [
+          "js/libs/jszip.min.js",
+          "content.js"
+          ]
     }
   ],
   "action": {
