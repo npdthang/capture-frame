@@ -10,8 +10,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         // Process the screenshot (you'll need to implement processScreenshot)
         processScreenshot(response.screenshotUrl).then((frameImages) => {
           console.log("Frames processed:", frameImages);
-          const dataZip = [];
-          frameImages.forEach((frameImage, index) => {
+          const dataZip = []; // Array store image capture 
+          frameImages.forEach((frameImage, index) => { // Traverse array and push data into
             dataZip.push({
               name: index + 1,
               base64: frameImage.image,
@@ -52,7 +52,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 });
 
 async function base64ToBlob(base64Data, contentType) {
-  base64Data = base64Data.replace('data:image/png;base64,','');
+  base64Data = base64Data.replace('data:image/png;base64,',''); // remove no use text
   const byteCharacters = atob(base64Data);
   const byteArrays = [];
 
